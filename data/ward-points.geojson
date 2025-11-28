@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "ward-pointss",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "offices-all_Party": "PC", "name": "Scarborough—Rouge Park", "party-id": 3, "mpp_renter_pct": 20.6, "30_pct_plus_inc": 32.7 }, "geometry": { "type": "Point", "coordinates": [ -79.176347829150941, 43.805207140711097 ] } },
+{ "type": "Feature", "properties": { "offices-all_Party": "PC", "name": "Scarborough North", "party-id": 3, "mpp_renter_pct": 20.6, "30_pct_plus_inc": 33.3 }, "geometry": { "type": "Point", "coordinates": [ -79.254660962769492, 43.809650705930196 ] } },
+{ "type": "Feature", "properties": { "offices-all_Party": "PC", "name": "Scarborough—Agincourt", "party-id": 3, "mpp_renter_pct": 33.8, "30_pct_plus_inc": 36.0 }, "geometry": { "type": "Point", "coordinates": [ -79.308120276285393, 43.796481095917244 ] } },
+{ "type": "Feature", "properties": { "offices-all_Party": "OLP", "name": "Scarborough—Guildwood", "party-id": 1, "mpp_renter_pct": 45.0, "30_pct_plus_inc": 31.6 }, "geometry": { "type": "Point", "coordinates": [ -79.214327246024084, 43.765347560816529 ] } },
+{ "type": "Feature", "properties": { "offices-all_Party": "NDP", "name": "Scarborough Southwest", "party-id": 2, "mpp_renter_pct": 45.7, "30_pct_plus_inc": 32.3 }, "geometry": { "type": "Point", "coordinates": [ -79.258163727340559, 43.711683626564458 ] } },
+{ "type": "Feature", "properties": { "offices-all_Party": "PC", "name": "Scarborough Centre", "party-id": 3, "mpp_renter_pct": 43.2, "30_pct_plus_inc": 35.8 }, "geometry": { "type": "Point", "coordinates": [ -79.276597443451152, 43.752760520780384 ] } }
+]
+}
