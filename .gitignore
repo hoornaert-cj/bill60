@@ -1,0 +1,18 @@
+# Node.js dependencies
+node_modules/
+
+# Logs
+*.log
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Local environment files
+.env
+
+# XAMPP specific files
+/path/to/xampp/directory/
+
+# Ignore build files
+dist/
