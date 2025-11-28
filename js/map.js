@@ -14,6 +14,7 @@ const map = L.map("map", {
   minZoom: MIN_ZOOM,
 });
 
+
 const PANES = [
   { name: "rirPane", zIndex: 200 },
   { name: "wardPane", zIndex: 300 },
@@ -286,6 +287,7 @@ function onEachFeature(feature, layer, cfg) {
 // =========================
 // 5. CUSTOM LEGEND / TOGGLE
 // =========================
+let legendContainer = null;
 
 const legendControl = L.control({ position: "topright" });
 
@@ -297,9 +299,15 @@ legendControl.onAdd = function () {
     <form id="layer-legend-form"></form>
   `;
   L.DomEvent.disableClickPropagation(div);
+
+  // 🔹 Save reference so the toggle button can use it
+  legendContainer = div;
+
   return div;
 };
+
 legendControl.addTo(map);
+
 
 function rebuildLegend() {
   const form = document.getElementById("layer-legend-form");
@@ -441,6 +449,42 @@ resetControl.onAdd = function (map) {
 };
 
 resetControl.addTo(map);
+
+// =========================
+// 5c. LEGEND TOGGLE BUTTON (for mobile)
+// =========================
+
+const legendToggleControl = L.control({ position: "bottomright" });
+
+legendToggleControl.onAdd = function (map) {
+  const container = L.DomUtil.create("div", "legend-toggle-btn leaflet-bar");
+
+  // prevent clicks from bubbling to map
+  L.DomEvent.disableClickPropagation(container);
+
+  const link = L.DomUtil.create("a", "", container);
+  link.href = "#";
+  link.title = "Toggle layers";
+  link.innerHTML = "☰";
+
+  L.DomEvent.on(link, "click", function (e) {
+    L.DomEvent.stop(e);
+
+    // 🔹 Use the captured reference instead of querySelector
+    if (!legendContainer) {
+      console.warn("Legend container not ready yet");
+      return;
+    }
+
+    legendContainer.classList.toggle("is-open");
+    console.log("Legend toggled, classes:", legendContainer.className);
+  });
+
+  return container;
+};
+
+legendToggleControl.addTo(map);
+
 
 
 // =========================
