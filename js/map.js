@@ -506,8 +506,8 @@ const layer = L.geoJSON(geojson, {
       fillColor: "#747575",
       color: "#ffffff",
       weight: 1,
-      opacity: 0.8,
-      fillOpacity: 0.8,
+      opacity: 1,
+      fillOpacity: 1,
     });
   },
   onEachFeature: (feature, layer) => onEachFeature(feature, layer, cfg),

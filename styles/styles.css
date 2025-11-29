@@ -79,7 +79,7 @@ body {
   border-radius: 50%;
   border: 1px solid #fff;
   background-color: #747575;
-  opacity: 1;
+  /* opacity: 1; */
 }
 
 .ward-marker {
