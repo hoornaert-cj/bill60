@@ -4,9 +4,9 @@
 // 1. INITIAL MAP SETUP
 // =========================
 // Initial view constants
-const INITIAL_CENTER = [43.765, -79.205];
-const INITIAL_ZOOM = 12;
-const MIN_ZOOM = 11
+const INITIAL_CENTER = [43.726, -79.390];
+const INITIAL_ZOOM = 11;
+const MIN_ZOOM = 10
 
 const map = L.map("map", {
   center: INITIAL_CENTER,
@@ -29,7 +29,7 @@ PANES.forEach(({ name, zIndex }) => {
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
-  minZoom: 11,
+  minZoom: 10,
   attribution: "&copy; OpenStreetMap contributors",
 }).addTo(map);
 
@@ -43,17 +43,17 @@ const LAYER_CONFIGS = [
   name: "MPP Parties",
   url: "data/ward-points.geojson",
   defaultVisible: true,
-  valueField: "mpp_renter_pct",
-  partyField: "offices-all_Party",
+  valueField: "pct_renters",
+  partyField: "mpp_party",
   pane: "rentersPane",
   minZoom: 12,
 },
     {
     id: "wards",
     name: "Wards",
-    url: "data/percent-renters_poly.geojson",
+    url: "data/ward-info.geojson",
     defaultVisible: true,
-    valueField: "AREA_NA13",
+    valueField: "ward_name",
     // pane: "wardPane",
   },
   {
@@ -61,7 +61,7 @@ const LAYER_CONFIGS = [
     name: "Renter Households Spending 30%+ on Shelter",
     url: "data/shelter-costs-above-30-pct.geojson",
     defaultVisible: true,
-    valueField: "pct_above_30",
+    valueField: "30_pct_plus_inc",
     pane: "rirPane",
   },
 ];
@@ -77,8 +77,8 @@ let combinedBounds = null;
 // --- MPP Party colors & square markers ---
 
 const PARTY_COLORS = {
-  "PC": "#1A4782",
-  "OLP": "#D71920",
+  "Progressive Conservative": "#1A4782",
+  "Liberal": "#D71920",
   "NDP": "#F37021",
 };
 
@@ -123,10 +123,10 @@ function createWardMarker(feature, latlng, cfg) {
 function getRentersRadius(value) {
   if (value == null || isNaN(value)) return 15;
   if (value < 30) return 20;
-  if (value < 40) return 30;
-  if (value < 50) return 40;
-  if (value < 60) return 50;
-  return 60; // 60%+
+  if (value < 40) return 25;
+  if (value < 50) return 30;
+  if (value < 60) return 35;
+  return 40; // 60%+
 }
 
 function createRentersMarker(feature, latlng, cfg) {
@@ -149,12 +149,11 @@ function createRentersMarker(feature, latlng, cfg) {
 function getRirColor(value) {
   if (value == null || isNaN(value)) return "#f0f0f0";
 
-  // value is a fraction: 0.316 = 31.6%
-  if (value <= 11) return "#e8e5f0";
-  if (value < 32) return "#beacd3";
-  if (value <  41) return "#9373b7";
-  if (value <  51) return "#69399a";
-  if (value >=  51) return "#3f007d";
+  if (value <= 11.0) return "#e8e5f0";
+  if (value < 32.0) return "#beacd3";
+  if (value <  41.0) return "#9373b7";
+  if (value <  51.0) return "#69399a";
+  if (value >=  51.0) return "#3f007d";
   return "#f16913";
 }
 
@@ -171,11 +170,11 @@ const RIR_LEGEND_CLASSES = [
 const MPP_LEGEND_ITEMS = [
   {
     label: "Progressive Conservative",
-    color: PARTY_COLORS["PC"],
+    color: PARTY_COLORS["Progressive Conservative"],
   },
   {
     label: "Liberal",
-    color: PARTY_COLORS["OLP"],
+    color: PARTY_COLORS["Liberal"],
   },
   {
     label: "NDP",
@@ -195,7 +194,6 @@ function styleForFeature(feature, cfg) {
   const geomType = feature.geometry?.type;
   const props = feature.properties || {};
 
-  // RIR polygons
   if (cfg.id === "rir" && (geomType === "Polygon" || geomType === "MultiPolygon")) {
     const value = Number(props[cfg.valueField]);
     return {
@@ -240,7 +238,7 @@ function onEachFeature(feature, layer, cfg) {
   let html = "";
 
   // Title: ward / area name
-  const wardName = props.AREA_NA13 || props.name;
+  const wardName = props.ward_name || props.name;
   if (wardName) {
     html += `<strong>${wardName}</strong><br>`;
   }
@@ -252,7 +250,7 @@ function onEachFeature(feature, layer, cfg) {
       ? props["30_pct_plus_inc"]
       : pctAbove30.toFixed(1);
 
-    html += `Renter households spending ≥30% of income: ${pctAbove30Formatted}%<br>`;
+    html += `Renter households spending ≥30% of income: ${pctAbove30Formatted}<br>`;
   }
 
     // Percent renters (where present)
@@ -508,8 +506,8 @@ const layer = L.geoJSON(geojson, {
       fillColor: "#747575",
       color: "#ffffff",
       weight: 1,
-      opacity: 1,
-      fillOpacity: 1,
+      opacity: 0.8,
+      fillOpacity: 0.8,
     });
   },
   onEachFeature: (feature, layer) => onEachFeature(feature, layer, cfg),
