@@ -65,8 +65,15 @@ const LAYER_CONFIGS = [
     valueField: "30_pct_plus_inc",
     pane: "shelterPane",
   },
+  {
+  id: "ct-renters",
+  name: "Renter Households by Census Tract (%)",
+  url: "data/shelter.geojson",
+  defaultVisible: false,
+  valueField: "ct_percent_renters",
+  pane: "shelterPane",
+},
 ];
-
 
 const overlayLayers = {};
 let combinedBounds = null;
@@ -145,8 +152,6 @@ function createRentersMarker(feature, latlng, cfg) {
 }
 
 
-// --- Shelter Cost polygons: choropleth by value ---
-
 function getShelterColor(value) {
   if (value == null || isNaN(value)) return "#f0f0f0";
 
@@ -158,13 +163,30 @@ function getShelterColor(value) {
   return "#f16913";
 }
 
-// --- Shelter legend classes (match getShelterColor) ---
 const SHELTER_LEGEND_CLASSES = [
   { label: "< 11%",     color: "#e8e5f0" },
   { label: "11–32%",    color: "#beacd3" },
   { label: "32-41%",     color: "#9373b7" },
   { label: "41-51%",    color: "#69399a" },
   { label: "≥ 51%",     color: "#3f007d" },
+];
+
+function getCtRentersColor(value) {
+  if (value == null || isNaN(value)) return "#f0f0f0";
+
+  if (value >= 50) return "#226B21";
+  if (value >= 40) return "#3EA931";
+  if (value >= 30) return "#5DB844";
+  if (value >= 20) return "#7CC657";
+  return "#9BD46A";
+}
+
+const CT_RENTERS_LEGEND_CLASSES = [
+  { label: "< 20%",  color: "#9BD46A" },
+  { label: "20–30%", color: "#7CC657" },
+  { label: "30–40%", color: "#5DB844" },
+  { label: "40–50%", color: "#3EA931" },
+  { label: "≥ 50%",  color: "#226B21" },
 ];
 
 // --- MPP Party legend (use PARTY_COLORS) ---
@@ -205,6 +227,21 @@ function styleForFeature(feature, cfg) {
       fillOpacity: 0.8,
     };
   }
+
+   // CT-level % renters polygons
+  if (cfg.id === "ct-renters" &&
+      (geomType === "Polygon" || geomType === "MultiPolygon")) {
+
+    const value = Number(props[cfg.valueField]);
+    return {
+      color: "#ffffff",
+      weight: 1,
+      opacity: 0.7,
+      fillColor: getCtRentersColor(value),
+      fillOpacity: 0.8,
+    };
+  }
+
 
   //ward polygons
   if(cfg.id==="wards" &&(geomType==="Polygon" || geomType ==="MultiPolygon")) {
@@ -251,7 +288,7 @@ function onEachFeature(feature, layer, cfg) {
       ? props["30_pct_plus_inc"]
       : pctAbove30.toFixed(1);
 
-    html += `Renter households spending ≥30% of income: ${pctAbove30Formatted}<br>`;
+    html += `Renter households spending ≥30% of income: ${pctAbove30Formatted}%<br>`;
   }
 
     // Percent renters (where present)
@@ -261,6 +298,15 @@ function onEachFeature(feature, layer, cfg) {
       ? props.pct_renters
       : renters.toFixed(1);
     html += `Renter households: ${rentersFormatted}%<br>`;
+  }
+
+      // Percent renters by census tract (where present)
+  if (props.ct_percent_renters != null) {
+    const ct_renters = Number(props.ct_percent_renters);
+    const ct_rentersFormatted = isNaN(ct_renters)
+      ? props.ct_percent_renters
+      : ct_renters.toFixed(1);
+    html += `Renter households: ${ct_rentersFormatted}%<br>`;
   }
 
   //Party (only present for MPP-related layers)
@@ -340,7 +386,7 @@ function rebuildLegend() {
     wrapper.appendChild(text);
     container.appendChild(wrapper);
 
-    // 1) Shelter colour classes
+    // 1) Shelter-cost pressure (% of renter HHs spending 30%+)
     if (cfg.id === "shelter") {
       const classesDiv = document.createElement("div");
       classesDiv.className = "layer-classes";
@@ -364,16 +410,39 @@ function rebuildLegend() {
       container.appendChild(classesDiv);
     }
 
-    // 2) Ward points: party colours + renters size
+    // 2) CT-level % renters (all renter households)
+    if (cfg.id === "ct-renters") {
+      const classesDiv = document.createElement("div");
+      classesDiv.className = "layer-classes";
+
+      CT_RENTERS_LEGEND_CLASSES.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "layer-classes-row";
+
+        const swatch = document.createElement("span");
+        swatch.className = "layer-classes-swatch";
+        swatch.style.background = item.color;
+
+        const label = document.createElement("span");
+        label.textContent = item.label;
+
+        row.appendChild(swatch);
+        row.appendChild(label);
+        classesDiv.appendChild(row);
+      });
+
+      container.appendChild(classesDiv);
+    }
+
+    // 3) Ward points: party colours + renters size
     if (cfg.id === "ward-points") {
-      // Small explanatory note
       const note = document.createElement("div");
       note.className = "layer-note";
       note.textContent =
         "Circle colour = MPP party; circle size & number = % of households that rent.";
       container.appendChild(note);
 
-      // 2a) Party colour legend
+      // Party colours
       const partyDiv = document.createElement("div");
       partyDiv.className = "layer-classes";
 
@@ -395,7 +464,7 @@ function rebuildLegend() {
 
       container.appendChild(partyDiv);
 
-      // 2b) Renters % size legend
+      // Renters % size legend
       const rentersDiv = document.createElement("div");
       rentersDiv.className = "layer-classes";
 
@@ -424,6 +493,7 @@ function rebuildLegend() {
     form.appendChild(container);
   });
 }
+
 
 // =========================
 // 5b. RESET VIEW CONTROL
