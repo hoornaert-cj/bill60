@@ -60,7 +60,7 @@ const LAYER_CONFIGS = [
   },
   {
     id: "shelter",
-    name: "Renter Households Spending 30%+ on Shelter",
+    name: "Renter Households Spending 30%+ on Shelter by Census Tract",
     url: "data/shelter.geojson",
     defaultVisible: true,
     valueField: "30_pct_plus_inc",
@@ -440,7 +440,7 @@ function rebuildLegend() {
       const note = document.createElement("div");
       note.className = "layer-note";
       note.textContent =
-        "Circle colour = MPP party; circle size & number = % of households that rent.";
+        "Circle colour = MPP party; circle size & number = % of households that rent (by ward/riding).";
       container.appendChild(note);
 
       // Party colours
