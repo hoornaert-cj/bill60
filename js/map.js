@@ -17,10 +17,11 @@ const map = L.map("map", {
 
 
 const PANES = [
-  { name: "shelterPane", zIndex: 200 },
-  { name: "wardPane", zIndex: 300 },
-  { name: "rentersPane", zIndex: 400 },
-  { name: "mppPane", zIndex: 450 },
+  { name: "ctRenterPane", zIndex: 250 },
+  { name: "shelterPane", zIndex: 350 },
+  { name: "wardPane", zIndex: 450 },
+  { name: "rentersPane", zIndex: 550 },
+  { name: "mppPane", zIndex: 650 },
 ];
 
 PANES.forEach(({ name, zIndex }) => {
@@ -71,7 +72,7 @@ const LAYER_CONFIGS = [
   url: "data/shelter.geojson",
   defaultVisible: false,
   valueField: "ct_percent_renters",
-  pane: "shelterPane",
+  pane: "ctRenterPane",
 },
 ];
 
@@ -224,7 +225,7 @@ function styleForFeature(feature, cfg) {
       weight: 1,
       opacity: 0.7,
       fillColor: getShelterColor(value),
-      fillOpacity: 0.8,
+      fillOpacity: 0.9,
     };
   }
 
@@ -238,7 +239,7 @@ function styleForFeature(feature, cfg) {
       weight: 1,
       opacity: 0.7,
       fillColor: getCtRentersColor(value),
-      fillOpacity: 0.8,
+      fillOpacity: 0.9,
     };
   }
 
