@@ -4,6 +4,7 @@
 // 1. INITIAL MAP SETUP
 // =========================
 // Initial view constants
+
 const INITIAL_CENTER = [43.726, -79.390];
 const INITIAL_ZOOM = 11;
 const MIN_ZOOM = 10
@@ -16,7 +17,7 @@ const map = L.map("map", {
 
 
 const PANES = [
-  { name: "rirPane", zIndex: 200 },
+  { name: "shelterPane", zIndex: 200 },
   { name: "wardPane", zIndex: 300 },
   { name: "rentersPane", zIndex: 400 },
   { name: "mppPane", zIndex: 450 },
@@ -57,12 +58,12 @@ const LAYER_CONFIGS = [
     // pane: "wardPane",
   },
   {
-    id: "rir",
+    id: "shelter",
     name: "Renter Households Spending 30%+ on Shelter",
-    url: "data/shelter-costs-above-30-pct.geojson",
+    url: "data/shelter.geojson",
     defaultVisible: true,
     valueField: "30_pct_plus_inc",
-    pane: "rirPane",
+    pane: "shelterPane",
   },
 ];
 
@@ -146,7 +147,7 @@ function createRentersMarker(feature, latlng, cfg) {
 
 // --- Shelter Cost polygons: choropleth by value ---
 
-function getRirColor(value) {
+function getShelterColor(value) {
   if (value == null || isNaN(value)) return "#f0f0f0";
 
   if (value <= 11.0) return "#e8e5f0";
@@ -157,8 +158,8 @@ function getRirColor(value) {
   return "#f16913";
 }
 
-// --- RIR legend classes (match getRirColor) ---
-const RIR_LEGEND_CLASSES = [
+// --- Shelter legend classes (match getShelterColor) ---
+const SHELTER_LEGEND_CLASSES = [
   { label: "< 11%",     color: "#e8e5f0" },
   { label: "11–32%",    color: "#beacd3" },
   { label: "32-41%",     color: "#9373b7" },
@@ -194,13 +195,13 @@ function styleForFeature(feature, cfg) {
   const geomType = feature.geometry?.type;
   const props = feature.properties || {};
 
-  if (cfg.id === "rir" && (geomType === "Polygon" || geomType === "MultiPolygon")) {
+  if (cfg.id === "shelter" && (geomType === "Polygon" || geomType === "MultiPolygon")) {
     const value = Number(props[cfg.valueField]);
     return {
       color: "#ffffff",
       weight: 1,
       opacity: 0.7,
-      fillColor: getRirColor(value),
+      fillColor: getShelterColor(value),
       fillOpacity: 0.8,
     };
   }
@@ -339,12 +340,12 @@ function rebuildLegend() {
     wrapper.appendChild(text);
     container.appendChild(wrapper);
 
-    // 1) RIR colour classes (unchanged)
-    if (cfg.id === "rir") {
+    // 1) Shelter colour classes
+    if (cfg.id === "shelter") {
       const classesDiv = document.createElement("div");
       classesDiv.className = "layer-classes";
 
-      RIR_LEGEND_CLASSES.forEach((item) => {
+      SHELTER_LEGEND_CLASSES.forEach((item) => {
         const row = document.createElement("div");
         row.className = "layer-classes-row";
 
