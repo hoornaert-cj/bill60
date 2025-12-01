@@ -56,14 +56,14 @@ const LAYER_CONFIGS = [
     url: "data/ward-info.geojson",
     defaultVisible: true,
     valueField: "ward_name",
-    // pane: "wardPane",
+    pane: "wardPane",
   },
   {
     id: "shelter",
     name: "Renter Households Spending 30%+ on Shelter by Census Tract",
     url: "data/shelter.geojson",
     defaultVisible: true,
-    valueField: "30_pct_plus_inc",
+    valueField: "ct_30_pct_plus_inc",
     pane: "shelterPane",
   },
   {
@@ -277,10 +277,19 @@ function onEachFeature(feature, layer, cfg) {
   let html = "";
 
   // Title: ward / area name
-  const wardName = props.ward_name || props.name;
-  if (wardName) {
-    html += `<strong>${wardName}</strong><br>`;
-  }
+let title = "";
+
+if (cfg.id === "wards" && props.ward_name) {
+  title = `Ward: ${props.ward_name}`;
+} else if (cfg.id === "shelter" && props.DGUID) {
+  title = `Census Tract: ${props.DGUID}`;
+} else if (props.name) {
+  title = props.name;
+}
+
+if (title) {
+  html += `<strong>${title}</strong><br>`;
+}
 
     // Percent renters spending ≥ 30% (where present)
   if (props["30_pct_plus_inc"] != null) {
@@ -290,6 +299,15 @@ function onEachFeature(feature, layer, cfg) {
       : pctAbove30.toFixed(1);
 
     html += `Renter households spending ≥30% of income: ${pctAbove30Formatted}%<br>`;
+  }
+
+    if (props["ct_30_pct_plus_inc"] != null) {
+    const ct_pctAbove30 = Number(props["ct_30_pct_plus_inc"]);
+    const ct_pctAbove30Formatted = isNaN(ct_pctAbove30)
+      ? props["ct_30_pct_plus_inc"]
+      : ct_pctAbove30.toFixed(1);
+
+    html += `Renter households spending ≥30% of income: ${ct_pctAbove30Formatted}%<br>`;
   }
 
     // Percent renters (where present)
