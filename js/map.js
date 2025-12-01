@@ -1,20 +1,12 @@
-// js/map.js
-
-// =========================
-// 1. INITIAL MAP SETUP
-// =========================
-// Initial view constants
-
 const INITIAL_CENTER = [43.726, -79.390];
 const INITIAL_ZOOM = 11;
-const MIN_ZOOM = 10
+const MIN_ZOOM = 10;
 
 const map = L.map("map", {
   center: INITIAL_CENTER,
   zoom: INITIAL_ZOOM,
   minZoom: MIN_ZOOM,
 });
-
 
 const PANES = [
   { name: "ctRenterPane", zIndex: 250 },
@@ -35,22 +27,18 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors",
 }).addTo(map);
 
-// =========================
-// 2. LAYER CONFIG
-// =========================
-
 const LAYER_CONFIGS = [
-{
-  id: "ward-points",
-  name: "MPP Parties",
-  url: "data/ward-points.geojson",
-  defaultVisible: true,
-  valueField: "pct_renters",
-  partyField: "mpp_party",
-  pane: "rentersPane",
-  minZoom: 12,
-},
-    {
+  {
+    id: "ward-points",
+    name: "MPP Parties",
+    url: "data/ward-points.geojson",
+    defaultVisible: true,
+    valueField: "pct_renters",
+    partyField: "mpp_party",
+    pane: "rentersPane",
+    minZoom: 12,
+  },
+  {
     id: "wards",
     name: "Wards",
     url: "data/ward-info.geojson",
@@ -67,28 +55,22 @@ const LAYER_CONFIGS = [
     pane: "shelterPane",
   },
   {
-  id: "ct-renters",
-  name: "Renter Households by Census Tract (%)",
-  url: "data/shelter.geojson",
-  defaultVisible: false,
-  valueField: "ct_percent_renters",
-  pane: "ctRenterPane",
-},
+    id: "ct-renters",
+    name: "Renter Households by Census Tract (%)",
+    url: "data/shelter.geojson",
+    defaultVisible: false,
+    valueField: "ct_percent_renters",
+    pane: "ctRenterPane",
+  },
 ];
 
 const overlayLayers = {};
 let combinedBounds = null;
 
-// =========================
-// 3. STYLING HELPERS
-// =========================
-
-// --- MPP Party colors & square markers ---
-
 const PARTY_COLORS = {
   "Progressive Conservative": "#1A4782",
-  "Liberal": "#D71920",
-  "NDP": "#F37021",
+  Liberal: "#D71920",
+  NDP: "#F37021",
 };
 
 function getPartyColor(partyRaw) {
@@ -102,11 +84,9 @@ function createWardMarker(feature, latlng, cfg) {
   const renterPct = Number(props[cfg.valueField]);
   const party = props[cfg.partyField];
   const color = getPartyColor(party);
-
   const radius = getRentersRadius(renterPct);
   const diameter = radius * 2;
   const labelText = isNaN(renterPct) ? "" : `${renterPct.toFixed(0)}%`;
-
   const html = `
     <div class="ward-marker"
          style="background-color:${color};
@@ -115,19 +95,14 @@ function createWardMarker(feature, latlng, cfg) {
       <span class="ward-label">${labelText}</span>
     </div>
   `;
-
   const icon = L.divIcon({
     html,
     className: "ward-icon",
     iconSize: [diameter, diameter],
     iconAnchor: [radius, radius],
   });
-
   return L.marker(latlng, { icon, pane: cfg.pane });
 }
-
-
-// --- Percent Renters: symbol size by value ---
 
 function getRentersRadius(value) {
   if (value == null || isNaN(value)) return 15;
@@ -135,46 +110,29 @@ function getRentersRadius(value) {
   if (value < 40) return 25;
   if (value < 50) return 30;
   if (value < 60) return 35;
-  return 40; // 60%+
+  return 40;
 }
-
-function createRentersMarker(feature, latlng, cfg) {
-  const props = feature.properties || {};
-  const value = Number(props[cfg.valueField]);
-  const radius = getRentersRadius(value);
-
-  return L.circleMarker(latlng, {
-    radius,
-    fillColor: "#747575",
-    opacity: 1,
-    fillOpacity: 0.9,
-    className: "renters-circle",
-  });
-}
-
 
 function getShelterColor(value) {
   if (value == null || isNaN(value)) return "#f0f0f0";
-
   if (value <= 11.0) return "#e8e5f0";
   if (value < 32.0) return "#beacd3";
-  if (value <  41.0) return "#9373b7";
-  if (value <  51.0) return "#69399a";
-  if (value >=  51.0) return "#3f007d";
+  if (value < 41.0) return "#9373b7";
+  if (value < 51.0) return "#69399a";
+  if (value >= 51.0) return "#3f007d";
   return "#f16913";
 }
 
 const SHELTER_LEGEND_CLASSES = [
-  { label: "< 11%",     color: "#e8e5f0" },
-  { label: "11–32%",    color: "#beacd3" },
-  { label: "32-41%",     color: "#9373b7" },
-  { label: "41-51%",    color: "#69399a" },
-  { label: "≥ 51%",     color: "#3f007d" },
+  { label: "< 11%", color: "#e8e5f0" },
+  { label: "11–32%", color: "#beacd3" },
+  { label: "32-41%", color: "#9373b7" },
+  { label: "41-51%", color: "#69399a" },
+  { label: "≥ 51%", color: "#3f007d" },
 ];
 
 function getCtRentersColor(value) {
   if (value == null || isNaN(value)) return "#f0f0f0";
-
   if (value >= 50) return "#226B21";
   if (value >= 40) return "#3EA931";
   if (value >= 30) return "#5DB844";
@@ -183,36 +141,24 @@ function getCtRentersColor(value) {
 }
 
 const CT_RENTERS_LEGEND_CLASSES = [
-  { label: "< 20%",  color: "#9BD46A" },
+  { label: "< 20%", color: "#9BD46A" },
   { label: "20–30%", color: "#7CC657" },
   { label: "30–40%", color: "#5DB844" },
   { label: "40–50%", color: "#3EA931" },
-  { label: "≥ 50%",  color: "#226B21" },
+  { label: "≥ 50%", color: "#226B21" },
 ];
 
-// --- MPP Party legend (use PARTY_COLORS) ---
 const MPP_LEGEND_ITEMS = [
-  {
-    label: "Progressive Conservative",
-    color: PARTY_COLORS["Progressive Conservative"],
-  },
-  {
-    label: "Liberal",
-    color: PARTY_COLORS["Liberal"],
-  },
-  {
-    label: "NDP",
-    color: PARTY_COLORS["NDP"],
-  },
+  { label: "Progressive Conservative", color: PARTY_COLORS["Progressive Conservative"] },
+  { label: "Liberal", color: PARTY_COLORS["Liberal"] },
+  { label: "NDP", color: PARTY_COLORS["NDP"] },
 ];
 
-// --- Renters % legend (size by value; match getRentersRadius) ---
 const RENTERS_LEGEND_CLASSES = [
   { label: "< 30%", radius: getRentersRadius(20) },
   { label: "30–40%", radius: getRentersRadius(30) },
   { label: "40–50%", radius: getRentersRadius(40) },
 ];
-
 
 function styleForFeature(feature, cfg) {
   const geomType = feature.geometry?.type;
@@ -220,40 +166,18 @@ function styleForFeature(feature, cfg) {
 
   if (cfg.id === "shelter" && (geomType === "Polygon" || geomType === "MultiPolygon")) {
     const value = Number(props[cfg.valueField]);
-    return {
-      color: "#ffffff",
-      weight: 1,
-      opacity: 0.7,
-      fillColor: getShelterColor(value),
-      fillOpacity: 0.9,
-    };
+    return { color: "#ffffff", weight: 1, opacity: 0.7, fillColor: getShelterColor(value), fillOpacity: 0.9 };
   }
 
-   // CT-level % renters polygons
-  if (cfg.id === "ct-renters" &&
-      (geomType === "Polygon" || geomType === "MultiPolygon")) {
-
+  if (cfg.id === "ct-renters" && (geomType === "Polygon" || geomType === "MultiPolygon")) {
     const value = Number(props[cfg.valueField]);
-    return {
-      color: "#ffffff",
-      weight: 1,
-      opacity: 0.7,
-      fillColor: getCtRentersColor(value),
-      fillOpacity: 0.9,
-    };
+    return { color: "#ffffff", weight: 1, opacity: 0.7, fillColor: getCtRentersColor(value), fillOpacity: 0.9 };
   }
 
-
-  //ward polygons
-  if(cfg.id==="wards" &&(geomType==="Polygon" || geomType ==="MultiPolygon")) {
-    return {
-      color: "#000",
-      weight: 2,
-      fillOpacity: 0,
-    };
+  if (cfg.id === "wards" && (geomType === "Polygon" || geomType === "MultiPolygon")) {
+    return { color: "#000", weight: 2, fillOpacity: 0 };
   }
 
-  // Default line/polygon fallback
   switch (geomType) {
     case "LineString":
     case "MultiLineString":
@@ -266,91 +190,57 @@ function styleForFeature(feature, cfg) {
   }
 }
 
-// =========================
-// 4. POPUPS
-// =========================
-
 function onEachFeature(feature, layer, cfg) {
   if (!feature.properties) return;
-
   const props = feature.properties;
   let html = "";
 
-  // Title: ward / area name
-let title = "";
+  let title = "";
+  if (cfg.id === "wards" && props.ward_name) {
+    title = `Ward: ${props.ward_name}`;
+  } else if (cfg.id === "shelter" && props.DGUID) {
+    title = `Census Tract: ${props.DGUID}`;
+  } else if (props.name) {
+    title = props.name;
+  }
 
-if (cfg.id === "wards" && props.ward_name) {
-  title = `Ward: ${props.ward_name}`;
-} else if (cfg.id === "shelter" && props.DGUID) {
-  title = `Census Tract: ${props.DGUID}`;
-} else if (props.name) {
-  title = props.name;
-}
+  if (title) html += `<strong>${title}</strong><br>`;
 
-if (title) {
-  html += `<strong>${title}</strong><br>`;
-}
-
-    // Percent renters spending ≥ 30% (where present)
   if (props["30_pct_plus_inc"] != null) {
     const pctAbove30 = Number(props["30_pct_plus_inc"]);
-    const pctAbove30Formatted = isNaN(pctAbove30)
-      ? props["30_pct_plus_inc"]
-      : pctAbove30.toFixed(1);
-
+    const pctAbove30Formatted = isNaN(pctAbove30) ? props["30_pct_plus_inc"] : pctAbove30.toFixed(1);
     html += `Renter households spending ≥30% of income: ${pctAbove30Formatted}%<br>`;
   }
 
-    if (props["ct_30_pct_plus_inc"] != null) {
+  if (props["ct_30_pct_plus_inc"] != null) {
     const ct_pctAbove30 = Number(props["ct_30_pct_plus_inc"]);
-    const ct_pctAbove30Formatted = isNaN(ct_pctAbove30)
-      ? props["ct_30_pct_plus_inc"]
-      : ct_pctAbove30.toFixed(1);
-
+    const ct_pctAbove30Formatted = isNaN(ct_pctAbove30) ? props["ct_30_pct_plus_inc"] : ct_pctAbove30.toFixed(1);
     html += `Renter households spending ≥30% of income: ${ct_pctAbove30Formatted}%<br>`;
   }
 
-    // Percent renters (where present)
   if (props.pct_renters != null) {
     const renters = Number(props.pct_renters);
-    const rentersFormatted = isNaN(renters)
-      ? props.pct_renters
-      : renters.toFixed(1);
+    const rentersFormatted = isNaN(renters) ? props.pct_renters : renters.toFixed(1);
     html += `Renter households: ${rentersFormatted}%<br>`;
   }
 
-      // Percent renters by census tract (where present)
   if (props.ct_percent_renters != null) {
     const ct_renters = Number(props.ct_percent_renters);
-    const ct_rentersFormatted = isNaN(ct_renters)
-      ? props.ct_percent_renters
-      : ct_renters.toFixed(1);
+    const ct_rentersFormatted = isNaN(ct_renters) ? props.ct_percent_renters : ct_renters.toFixed(1);
     html += `Renter households: ${ct_rentersFormatted}%<br>`;
   }
 
-  //Party (only present for MPP-related layers)
-  const party =
-    props.mpp_party ||
-    props["offices-all_Party"] || props["mpp_party"];
+  const party = props.mpp_party || props["offices-all_Party"] || props["mpp_party"];
+  if (party) html += `MPP party: ${party}<br>`;
 
-  if (party) {
-    html += `MPP party: ${party}<br>`;
-  }
-
-  // 5. Fallback dump of attributes, if nothing else was added
   if (!html) {
-    const rows = Object.entries(props)
-      .map(([k, v]) => `<strong>${k}</strong>: ${v}`)
-      .join("<br>");
+    const rows = Object.entries(props).map(([k, v]) => `<strong>${k}</strong>: ${v}`).join("<br>");
     html = rows || "No attributes";
   }
 
   layer.bindPopup(html);
 }
 
-// =========================
-// 5. CUSTOM LEGEND / TOGGLE
-// =========================
 let legendContainer = null;
 
 const legendControl = L.control({ position: "topright" });
@@ -363,20 +253,15 @@ legendControl.onAdd = function () {
     <form id="layer-legend-form"></form>
   `;
   L.DomEvent.disableClickPropagation(div);
-
-  // 🔹 Save reference so the toggle button can use it
   legendContainer = div;
-
   return div;
 };
 
 legendControl.addTo(map);
 
-
 function rebuildLegend() {
   const form = document.getElementById("layer-legend-form");
   if (!form) return;
-
   form.innerHTML = "";
 
   LAYER_CONFIGS.forEach((cfg) => {
@@ -405,107 +290,80 @@ function rebuildLegend() {
     wrapper.appendChild(text);
     container.appendChild(wrapper);
 
-    // 1) Shelter-cost pressure (% of renter HHs spending 30%+)
     if (cfg.id === "shelter") {
       const classesDiv = document.createElement("div");
       classesDiv.className = "layer-classes";
-
       SHELTER_LEGEND_CLASSES.forEach((item) => {
         const row = document.createElement("div");
         row.className = "layer-classes-row";
-
         const swatch = document.createElement("span");
         swatch.className = "layer-classes-swatch";
         swatch.style.background = item.color;
-
         const label = document.createElement("span");
         label.textContent = item.label;
-
         row.appendChild(swatch);
         row.appendChild(label);
         classesDiv.appendChild(row);
       });
-
       container.appendChild(classesDiv);
     }
 
-    // 2) CT-level % renters (all renter households)
     if (cfg.id === "ct-renters") {
       const classesDiv = document.createElement("div");
       classesDiv.className = "layer-classes";
-
       CT_RENTERS_LEGEND_CLASSES.forEach((item) => {
         const row = document.createElement("div");
         row.className = "layer-classes-row";
-
         const swatch = document.createElement("span");
         swatch.className = "layer-classes-swatch";
         swatch.style.background = item.color;
-
         const label = document.createElement("span");
         label.textContent = item.label;
-
         row.appendChild(swatch);
         row.appendChild(label);
         classesDiv.appendChild(row);
       });
-
       container.appendChild(classesDiv);
     }
 
-    // 3) Ward points: party colours + renters size
     if (cfg.id === "ward-points") {
       const note = document.createElement("div");
       note.className = "layer-note";
-      note.textContent =
-        "Circle colour = MPP party; circle size & number = % of households that rent (by ward/riding).";
+      note.textContent = "Circle colour = MPP party; circle size & number = % of households that rent (by ward/riding).";
       container.appendChild(note);
 
-      // Party colours
       const partyDiv = document.createElement("div");
       partyDiv.className = "layer-classes";
-
       MPP_LEGEND_ITEMS.forEach((item) => {
         const row = document.createElement("div");
         row.className = "layer-classes-row";
-
         const swatch = document.createElement("span");
         swatch.className = "layer-classes-swatch";
         swatch.style.background = item.color;
-
         const label = document.createElement("span");
         label.textContent = item.label;
-
         row.appendChild(swatch);
         row.appendChild(label);
         partyDiv.appendChild(row);
       });
-
       container.appendChild(partyDiv);
 
-      // Renters % size legend
       const rentersDiv = document.createElement("div");
       rentersDiv.className = "layer-classes";
-
       RENTERS_LEGEND_CLASSES.forEach((item) => {
         const row = document.createElement("div");
         row.className = "layer-classes-row";
-
         const circle = document.createElement("span");
         circle.className = "layer-classes-swatch-circle";
-
         const diameter = item.radius * 2;
         circle.style.width = `${diameter}px`;
         circle.style.height = `${diameter}px`;
-
         const label = document.createElement("span");
         label.textContent = item.label;
-
         row.appendChild(circle);
         row.appendChild(label);
         rentersDiv.appendChild(row);
       });
-
       container.appendChild(rentersDiv);
     }
 
@@ -513,71 +371,45 @@ function rebuildLegend() {
   });
 }
 
-
-// =========================
-// 5b. RESET VIEW CONTROL
-// =========================
-
 const resetControl = L.control({ position: "topleft" });
 
 resetControl.onAdd = function (map) {
   const container = L.DomUtil.create("div", "leaflet-bar reset-control");
-
   const link = L.DomUtil.create("a", "", container);
   link.href = "#";
   link.title = "Reset view";
-  link.innerHTML = "⟳"; // you can change this to "R" or a house icon
-
+  link.innerHTML = "⟳";
   L.DomEvent.on(link, "click", function (e) {
     L.DomEvent.stop(e);
     map.setView(INITIAL_CENTER, INITIAL_ZOOM);
   });
-
   return container;
 };
 
 resetControl.addTo(map);
 
-// =========================
-// 5c. LEGEND TOGGLE BUTTON (for mobile)
-// =========================
-
 const legendToggleControl = L.control({ position: "bottomright" });
 
 legendToggleControl.onAdd = function (map) {
   const container = L.DomUtil.create("div", "legend-toggle-btn leaflet-bar");
-
-  // prevent clicks from bubbling to map
   L.DomEvent.disableClickPropagation(container);
-
   const link = L.DomUtil.create("a", "", container);
   link.href = "#";
   link.title = "Toggle layers";
   link.innerHTML = "☰";
-
   L.DomEvent.on(link, "click", function (e) {
     L.DomEvent.stop(e);
-
-    // 🔹 Use the captured reference instead of querySelector
     if (!legendContainer) {
       console.warn("Legend container not ready yet");
       return;
     }
-
     legendContainer.classList.toggle("is-open");
     console.log("Legend toggled, classes:", legendContainer.className);
   });
-
   return container;
 };
 
 legendToggleControl.addTo(map);
-
-
-
-// =========================
-// 6. LOAD GEOJSON LAYERS
-// =========================
 
 LAYER_CONFIGS.forEach((cfg) => {
   fetch(cfg.url)
@@ -586,54 +418,42 @@ LAYER_CONFIGS.forEach((cfg) => {
       return response.json();
     })
     .then((geojson) => {
-const layer = L.geoJSON(geojson, {
-  pane: cfg.pane,
-  style: (feature) => styleForFeature(feature, cfg),
-  pointToLayer: (feature, latlng) => {
-    if (cfg.id === "ward-points") return createWardMarker(feature, latlng, cfg);
-    return L.circleMarker(latlng, {
-      radius: 6,
-      fillColor: "#747575",
-      color: "#ffffff",
-      weight: 1,
-      opacity: 1,
-      fillOpacity: 1,
-    });
-  },
-  onEachFeature: (feature, layer) => onEachFeature(feature, layer, cfg),
-});
-
+      const layer = L.geoJSON(geojson, {
+        pane: cfg.pane,
+        style: (feature) => styleForFeature(feature, cfg),
+        pointToLayer: (feature, latlng) => {
+          if (cfg.id === "ward-points") return createWardMarker(feature, latlng, cfg);
+          return L.circleMarker(latlng, {
+            radius: 6,
+            fillColor: "#747575",
+            color: "#ffffff",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 1,
+          });
+        },
+        onEachFeature: (feature, layer) => onEachFeature(feature, layer, cfg),
+      });
 
       overlayLayers[cfg.id] = layer;
       if (cfg.defaultVisible) layer.addTo(map);
-
       const bounds = layer.getBounds();
       if (bounds.isValid()) {
         combinedBounds = combinedBounds ? combinedBounds.extend(bounds) : bounds;
       }
-
       rebuildLegend();
       updateZoomVisibility();
     })
     .catch((err) => console.error(`Error loading ${cfg.url}`, err));
 });
 
-// =========================
-// 7. ZOOM-BASED VISIBILITY
-// =========================
-
 function updateZoomVisibility() {
   const z = map.getZoom();
-
   const wardPointsLayer = overlayLayers["ward-points"];
   if (!wardPointsLayer) return;
-
-  const checkbox = document.querySelector(
-    'input[type="checkbox"][value="ward-points"]'
-  );
+  const checkbox = document.querySelector('input[type="checkbox"][value="ward-points"]');
   const checkboxChecked = checkbox ? checkbox.checked : true;
   const shouldShow = z >= 12 && checkboxChecked;
-
   if (shouldShow && !map.hasLayer(wardPointsLayer)) {
     map.addLayer(wardPointsLayer);
   } else if (!shouldShow && map.hasLayer(wardPointsLayer)) {
