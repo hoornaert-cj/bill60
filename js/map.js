@@ -12,8 +12,7 @@ const PANES = [
   { name: "ctRenterPane", zIndex: 250 },
   { name: "shelterPane", zIndex: 350 },
   { name: "wardPane", zIndex: 450 },
-  { name: "rentersPane", zIndex: 550 },
-  { name: "mppPane", zIndex: 650 },
+  { name: "mppPane", zIndex: 550 },
 ];
 
 PANES.forEach(({ name, zIndex }) => {
@@ -24,7 +23,7 @@ PANES.forEach(({ name, zIndex }) => {
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
   minZoom: 10,
-  attribution: "&copy; OpenStreetMap contributors",
+  attribution: "&copy; OpenStreetMap contributors | Data: City of Toronto Open Data Portal & Statistics Canada (Census 2021)",
 }).addTo(map);
 
 const LAYER_CONFIGS = [
@@ -35,7 +34,7 @@ const LAYER_CONFIGS = [
     defaultVisible: true,
     valueField: "pct_renters",
     partyField: "mpp_party",
-    pane: "rentersPane",
+    pane: "mppPane",
     minZoom: 12,
   },
   {
@@ -48,19 +47,11 @@ const LAYER_CONFIGS = [
   },
   {
     id: "shelter",
-    name: "Renter Households Spending 30%+ on Shelter by Census Tract",
+    name: "Estimated At-Risk Renter Households (Census Tract)",
     url: "data/shelter.geojson",
     defaultVisible: true,
-    valueField: "ct_30_pct_plus_inc",
+    valueField: "ct_risk",
     pane: "shelterPane",
-  },
-  {
-    id: "ct-renters",
-    name: "Renter Households by Census Tract (%)",
-    url: "data/shelter.geojson",
-    defaultVisible: false,
-    valueField: "ct_percent_renters",
-    pane: "ctRenterPane",
   },
 ];
 
@@ -115,20 +106,20 @@ function getRentersRadius(value) {
 
 function getShelterColor(value) {
   if (value == null || isNaN(value)) return "#f0f0f0";
-  if (value <= 11.0) return "#e8e5f0";
-  if (value < 32.0) return "#beacd3";
-  if (value < 41.0) return "#9373b7";
-  if (value < 51.0) return "#69399a";
-  if (value >= 51.0) return "#3f007d";
-  return "#f16913";
+  if (value <= 10.0) return "#e8e5f0";
+  if (value < 20.0) return "#beacd3";
+  if (value < 30.0) return "#9373b7";
+  if (value < 40.0) return "#69399a";
+  // if (value >= 50.0) return "#3f007d";
+  return "#3f007d";
 }
 
 const SHELTER_LEGEND_CLASSES = [
-  { label: "< 11%", color: "#e8e5f0" },
-  { label: "11–32%", color: "#beacd3" },
-  { label: "32-41%", color: "#9373b7" },
-  { label: "41-51%", color: "#69399a" },
-  { label: "≥ 51%", color: "#3f007d" },
+  { label: "< 10%", color: "#e8e5f0" },
+  { label: "11–20%", color: "#beacd3" },
+  { label: "21-30%", color: "#9373b7" },
+  // { label: "31-50%", color: "#69399a" },
+  { label: "≥ 40%", color: "#3f007d" },
 ];
 
 function getCtRentersColor(value) {
@@ -192,54 +183,83 @@ function styleForFeature(feature, cfg) {
 
 function onEachFeature(feature, layer, cfg) {
   if (!feature.properties) return;
+
   const props = feature.properties;
   let html = "";
 
+  if(cfg.id==="wards") {
+    if(props.ward_name) {
+      layer.bindTooltip(props.ward_name, {
+        permanent: true,
+        direction: "top",
+        className: "ward-label"
+      });
+    }
+
+    return;
+  }
+
   let title = "";
-  if (cfg.id === "wards" && props.ward_name) {
-    title = `Ward: ${props.ward_name}`;
-  } else if (cfg.id === "shelter" && props.DGUID) {
+  if(cfg.id === "shelter" && props.DGUID) {
     title = `Census Tract: ${props.DGUID}`;
-  } else if (props.name) {
+  }else if (props.name) {
     title = props.name;
   }
 
-  if (title) html += `<strong>${title}</strong><br>`;
+  if(title) {
+    html += `<strong>${title}</strong><br>`;
+  }
 
-  if (props["30_pct_plus_inc"] != null) {
+  if (props ["30_pct_plus_inc"] != null && cfg.id !== "shelter") {
     const pctAbove30 = Number(props["30_pct_plus_inc"]);
-    const pctAbove30Formatted = isNaN(pctAbove30) ? props["30_pct_plus_inc"] : pctAbove30.toFixed(1);
-    html += `Renter households spending ≥30% of income: ${pctAbove30Formatted}%<br>`;
+    const pctAbove30Formatted = isNaN(pctAbove30)
+      ? props["30_pct_plus_inc"]
+      : pctAbove30.toFixed(1);
+
+      html += `Renter households spending ≥30% of income (ward): ${pctAbove30Formatted}%<br>`;
   }
 
-  if (props["ct_30_pct_plus_inc"] != null) {
-    const ct_pctAbove30 = Number(props["ct_30_pct_plus_inc"]);
-    const ct_pctAbove30Formatted = isNaN(ct_pctAbove30) ? props["ct_30_pct_plus_inc"] : ct_pctAbove30.toFixed(1);
-    html += `Renter households spending ≥30% of income: ${ct_pctAbove30Formatted}%<br>`;
+  if(props["ct_30_pct_plus_inc"] != null) {
+    const ct_PctAbove30 = Number(props["ct_30_pct_plus_inc"]);
+    const ct_PctAbove30Formatted = isNaN(ct_PctAbove30)
+      ? props["ct_30_pct_plus_inc"]
+      : ct_PctAbove30.toFixed(1);
+
+      html +=  `Renter households spending ≥30% of income (census tract) ${ct_PctAbove30Formatted}%<br>`;
   }
 
-  if (props.pct_renters != null) {
+  if(props.pct_renters != null && cfg.id !== "shelter") {
     const renters = Number(props.pct_renters);
-    const rentersFormatted = isNaN(renters) ? props.pct_renters : renters.toFixed(1);
-    html += `Renter households: ${rentersFormatted}%<br>`;
+    const rentersFormatted = isNaN(renters)
+      ? props.pct_renters
+      : renters.toFixed();
+
+      html += `Renter households: ${rentersFormatted}%<br>`;
   }
 
-  if (props.ct_percent_renters != null) {
-    const ct_renters = Number(props.ct_percent_renters);
-    const ct_rentersFormatted = isNaN(ct_renters) ? props.ct_percent_renters : ct_renters.toFixed(1);
-    html += `Renter households: ${ct_rentersFormatted}%<br>`;
+  if(props.ct_percent_renters != null) {
+    const ctRenters = Number(props.ct_percent_renters);
+    const ctRentersFormatted = isNaN(ctRenters)
+      ? props.ct_pct_renters
+      : ctRenters.toFixed(1);
+
+    html += `Renter households: ${ctRentersFormatted}%<br>`
   }
 
-  const party = props.mpp_party || props["offices-all_Party"] || props["mpp_party"];
-  if (party) html += `MPP party: ${party}<br>`;
+  if(props.ct_risk != null) {
+    const ctRisk = Number(props.ct_risk);
+    const ctRiskFormatted = isNaN(ctRisk)
+      ? props.ct_risk
+      : ctRisk.toFixed(1);
 
-  if (!html) {
-    const rows = Object.entries(props).map(([k, v]) => `<strong>${k}</strong>: ${v}`).join("<br>");
-    html = rows || "No attributes";
+      html += `Estimated households at risk (of all households): ${ctRiskFormatted}%<br>`
   }
+
+
 
   layer.bindPopup(html);
 }
+
 
 let legendContainer = null;
 
@@ -251,6 +271,7 @@ legendControl.onAdd = function () {
     <h3>Renter Housing Cost Burden</h3>
     <h4>Layers</h4>
     <form id="layer-legend-form"></form>
+     <p class="layer-note">Tip: Turn off the “Wards” layer to view and click census tracts.</p>
   `;
   L.DomEvent.disableClickPropagation(div);
   legendContainer = div;

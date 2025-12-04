@@ -10,7 +10,6 @@ body {
   height: 100%;
 }
 
-/* Base legend style (desktop) */
 .layer-legend {
   background: #ffffff;
   padding: 0.5rem 0.625rem;
@@ -22,7 +21,6 @@ body {
   max-width: 15.625rem;
 }
 
-/* Toggle button hidden by default (desktop) */
 .legend-toggle-btn {
   display: none;
 }
@@ -79,7 +77,6 @@ body {
   border-radius: 50%;
   border: 1px solid #fff;
   background-color: #747575;
-  /* opacity: 1; */
 }
 
 .ward-marker {
@@ -99,10 +96,6 @@ body {
   pointer-events: none;
 }
 
-.ward-icon {
-  /* keeps Leaflet divIcon defaults */
-}
-
 .layer-note {
   font-size: 11px;
   color: #555;
@@ -119,26 +112,27 @@ body {
   cursor: pointer;
 }
 
-
-/* Toggle button for mobile – hidden on desktop */
 .legend-toggle-btn {
   display: none;
 }
 
-/* Mobile layout */
-/* Mobile layout */
+.layer-note {
+  font-size: 0.8rem;
+  color: #555;
+  margin-top: 0.5rem;
+  line-height: 1.3;
+}
+
 @media (max-width: 48em) {
-  /* 🔹 Just hide the legend by default on mobile */
   .layer-legend {
     display: none;
   }
 
-  /* 🔹 When the toggle adds .is-open, show it again */
+
   .layer-legend.is-open {
     display: block;
   }
 
-  /* Show the toggle button on mobile */
   .legend-toggle-btn {
     display: block;
     position: absolute;
