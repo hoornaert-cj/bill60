@@ -15,6 +15,9 @@ const PANES = [
   { name: "mppPane", zIndex: 550 },
 ];
 
+const WARD_LABEL_MIN_ZOOM = 12;
+const wardLabelLayer = L.layerGroup().addTo(map);
+
 PANES.forEach(({ name, zIndex }) => {
   map.createPane(name);
   map.getPane(name).style.zIndex = zIndex;
@@ -110,7 +113,6 @@ function getShelterColor(value) {
   if (value < 20.0) return "#beacd3";
   if (value < 30.0) return "#9373b7";
   if (value < 40.0) return "#69399a";
-  // if (value >= 50.0) return "#3f007d";
   return "#3f007d";
 }
 
@@ -118,7 +120,7 @@ const SHELTER_LEGEND_CLASSES = [
   { label: "< 10%", color: "#e8e5f0" },
   { label: "11–20%", color: "#beacd3" },
   { label: "21-30%", color: "#9373b7" },
-  // { label: "31-50%", color: "#69399a" },
+  { label: "31-40%", color: "#69399a" },
   { label: "≥ 40%", color: "#3f007d" },
 ];
 
@@ -186,22 +188,29 @@ function onEachFeature(feature, layer, cfg) {
 
   const props = feature.properties;
   let html = "";
-
-  if(cfg.id==="wards") {
-    if(props.ward_name) {
-      layer.bindTooltip(props.ward_name, {
-        permanent: true,
-        direction: "top",
-        className: "ward-label"
-      });
-    }
-
-    return;
-  }
-
   let title = "";
-  if(cfg.id === "shelter" && props.DGUID) {
+
+  if(cfg.id==="wards" && props.ward_name) {
+    title = `Ward: ${props.ward_name}`;
+
+    const center = layer.getBounds().getCenter();
+
+    const labelMarker = L.marker(center, {
+      pane: "wardPane",
+      interactive: false,
+      icon: L.divIcon({
+        className: "ward-name-label",
+        html: `<span>${props.ward_name} </span>`,
+        iconSize: [100,24],
+        iconAnchor: [50, -8],
+      }),
+    });
+
+    wardLabelLayer.addLayer(labelMarker);
+  }else if(cfg.id === "shelter" && props.DGUID) {
     title = `Census Tract: ${props.DGUID}`;
+  }else if(cfg.id === "ward-points" && props.ward_name) {
+    title= `Ward: ${props.ward_name}`
   }else if (props.name) {
     title = props.name;
   }
@@ -216,7 +225,7 @@ function onEachFeature(feature, layer, cfg) {
       ? props["30_pct_plus_inc"]
       : pctAbove30.toFixed(1);
 
-      html += `Renter households spending ≥30% of income (ward): ${pctAbove30Formatted}%<br>`;
+      html += `Renter households spending ≥30% of income: ${pctAbove30Formatted}%<br>`;
   }
 
   if(props["ct_30_pct_plus_inc"] != null) {
@@ -225,7 +234,7 @@ function onEachFeature(feature, layer, cfg) {
       ? props["ct_30_pct_plus_inc"]
       : ct_PctAbove30.toFixed(1);
 
-      html +=  `Renter households spending ≥30% of income (census tract) ${ct_PctAbove30Formatted}%<br>`;
+      html +=  `Renter households spending ≥30% of income: ${ct_PctAbove30Formatted}%<br>`;
   }
 
   if(props.pct_renters != null && cfg.id !== "shelter") {
@@ -252,10 +261,8 @@ function onEachFeature(feature, layer, cfg) {
       ? props.ct_risk
       : ctRisk.toFixed(1);
 
-      html += `Estimated households at risk (of all households): ${ctRiskFormatted}%<br>`
+      html += `Estimated total households at risk: ${ctRiskFormatted}%<br>`
   }
-
-
 
   layer.bindPopup(html);
 }
@@ -271,7 +278,6 @@ legendControl.onAdd = function () {
     <h3>Renter Housing Cost Burden</h3>
     <h4>Layers</h4>
     <form id="layer-legend-form"></form>
-     <p class="layer-note">Tip: Turn off the “Wards” layer to view and click census tracts.</p>
   `;
   L.DomEvent.disableClickPropagation(div);
   legendContainer = div;
@@ -439,7 +445,7 @@ LAYER_CONFIGS.forEach((cfg) => {
       return response.json();
     })
     .then((geojson) => {
-      const layer = L.geoJSON(geojson, {
+      const options =  {
         pane: cfg.pane,
         style: (feature) => styleForFeature(feature, cfg),
         pointToLayer: (feature, latlng) => {
@@ -454,7 +460,13 @@ LAYER_CONFIGS.forEach((cfg) => {
           });
         },
         onEachFeature: (feature, layer) => onEachFeature(feature, layer, cfg),
-      });
+      };
+
+      if(cfg.id === "wards") {
+        options.interactive = false;
+      }
+
+      const layer = L.geoJSON(geojson, options);
 
       overlayLayers[cfg.id] = layer;
       if (cfg.defaultVisible) layer.addTo(map);

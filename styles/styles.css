@@ -94,6 +94,7 @@ body {
 
 .ward-label {
   pointer-events: none;
+  background: none;
 }
 
 .layer-note {
