@@ -16,7 +16,7 @@ const PANES = [
 ];
 
 const WARD_LABEL_MIN_ZOOM = 12;
-const wardLabelLayer = L.layerGroup().addTo(map);
+const wardLabelLayer = L.layerGroup();
 
 PANES.forEach(({ name, zIndex }) => {
   map.createPane(name);
@@ -201,8 +201,8 @@ function onEachFeature(feature, layer, cfg) {
       icon: L.divIcon({
         className: "ward-name-label",
         html: `<span>${props.ward_name} </span>`,
-        iconSize: [100,24],
-        iconAnchor: [50, -8],
+        iconSize: [80,24],
+        // iconAnchor: [20, 20],
       }),
     });
 
@@ -308,7 +308,12 @@ function rebuildLegend() {
     checkbox.addEventListener("change", (e) => {
       if (e.target.checked) map.addLayer(layer);
       else map.removeLayer(layer);
-    });
+
+
+    if(cfg.id=== "ward-points") {
+      updateZoomVisibility();
+    }
+  });
 
     const text = document.createElement("span");
     text.textContent = cfg.name;
@@ -482,17 +487,31 @@ LAYER_CONFIGS.forEach((cfg) => {
 
 function updateZoomVisibility() {
   const z = map.getZoom();
+
   const wardPointsLayer = overlayLayers["ward-points"];
   if (!wardPointsLayer) return;
-  const checkbox = document.querySelector('input[type="checkbox"][value="ward-points"]');
-  const checkboxChecked = checkbox ? checkbox.checked : true;
-  const shouldShow = z >= 12 && checkboxChecked;
-  if (shouldShow && !map.hasLayer(wardPointsLayer)) {
+
+  const checkbox = document.querySelector(
+    'input[type="checkbox"][value="ward-points"]'
+  );
+  const checkboxChecked = checkbox ? checkbox.checked: true;
+
+  const showPoints = z >= 12 && checkboxChecked;
+
+  if (showPoints && !map.hasLayer(wardPointsLayer)) {
     map.addLayer(wardPointsLayer);
-  } else if (!shouldShow && map.hasLayer(wardPointsLayer)) {
+  } else if (!showPoints && map.hasLayer(wardPointsLayer)) {
     map.removeLayer(wardPointsLayer);
   }
+
+  const showLabels = z >= WARD_LABEL_MIN_ZOOM && !showPoints
+if(showLabels && !map.hasLayer(wardLabelLayer)) {
+  map.addLayer(wardLabelLayer);
+}else if (!showLabels && map.hasLayer(wardLabelLayer)) {
+  map.removeLayer(wardLabelLayer)
 }
+}
+
 
 map.on("zoomend", updateZoomVisibility);
 map.whenReady(updateZoomVisibility);
