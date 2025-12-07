@@ -202,7 +202,6 @@ function onEachFeature(feature, layer, cfg) {
         className: "ward-name-label",
         html: `<span>${props.ward_name} </span>`,
         iconSize: [80,24],
-        // iconAnchor: [20, 20],
       }),
     });
 
@@ -249,7 +248,7 @@ function onEachFeature(feature, layer, cfg) {
   if(props.ct_percent_renters != null) {
     const ctRenters = Number(props.ct_percent_renters);
     const ctRentersFormatted = isNaN(ctRenters)
-      ? props.ct_pct_renters
+      ? props.ct_percent_renters
       : ctRenters.toFixed(1);
 
     html += `Renter households: ${ctRentersFormatted}%<br>`
@@ -306,14 +305,16 @@ function rebuildLegend() {
     checkbox.value = cfg.id;
     checkbox.checked = map.hasLayer(layer);
     checkbox.addEventListener("change", (e) => {
-      if (e.target.checked) map.addLayer(layer);
-      else map.removeLayer(layer);
+      if (e.target.checked) {
+        map.addLayer(layer);
+      } else {
+        map.removeLayer(layer);
+      }
 
-
-    if(cfg.id=== "ward-points") {
-      updateZoomVisibility();
-    }
-  });
+      if (cfg.id === "ward-points" || cfg.id === "wards") {
+        updateZoomVisibility();
+      }
+    });
 
     const text = document.createElement("span");
     text.textContent = cfg.name;
@@ -489,14 +490,19 @@ function updateZoomVisibility() {
   const z = map.getZoom();
 
   const wardPointsLayer = overlayLayers["ward-points"];
-  if (!wardPointsLayer) return;
+  const wardsLayer = overlayLayers["wards"];
+  if (!wardPointsLayer || !wardsLayer) return;
 
-  const checkbox = document.querySelector(
+  const wardPointsCheckbox = document.querySelector(
     'input[type="checkbox"][value="ward-points"]'
   );
-  const checkboxChecked = checkbox ? checkbox.checked: true;
+  const wardsCheckbox = document.querySelector(
+    'input[type="checkbox"][value="wards"]'
+  );
 
-  const showPoints = z >= 12 && checkboxChecked;
+  const wardPointsChecked = wardPointsCheckbox ? wardPointsCheckbox.checked : true;
+  const wardsChecked = wardsCheckbox ? wardsCheckbox.checked : true;
+  const showPoints = z >= 12 && wardPointsChecked;
 
   if (showPoints && !map.hasLayer(wardPointsLayer)) {
     map.addLayer(wardPointsLayer);
@@ -504,14 +510,14 @@ function updateZoomVisibility() {
     map.removeLayer(wardPointsLayer);
   }
 
-  const showLabels = z >= WARD_LABEL_MIN_ZOOM && !showPoints
-if(showLabels && !map.hasLayer(wardLabelLayer)) {
-  map.addLayer(wardLabelLayer);
-}else if (!showLabels && map.hasLayer(wardLabelLayer)) {
-  map.removeLayer(wardLabelLayer)
-}
-}
+  const showLabels = z >= WARD_LABEL_MIN_ZOOM && wardsChecked && !showPoints;
 
+  if (showLabels && !map.hasLayer(wardLabelLayer)) {
+    map.addLayer(wardLabelLayer);
+  } else if (!showLabels && map.hasLayer(wardLabelLayer)) {
+    map.removeLayer(wardLabelLayer);
+  }
+}
 
 map.on("zoomend", updateZoomVisibility);
 map.whenReady(updateZoomVisibility);
